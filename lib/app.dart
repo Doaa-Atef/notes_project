@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:notes/notes_manager/notes_cubit.dart';
+import 'package:notes/view/screens/note_screen.dart';
 
 import 'main.dart';
-import 'note_screens/note_screen.dart';
+
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -12,6 +13,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Flutter Demo',
       theme: ThemeData(
         // This is the theme of your application.

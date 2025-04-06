@@ -1,6 +1,6 @@
 
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:meta/meta.dart';
+
 
 import '../models/note_model.dart';
 
@@ -18,11 +18,36 @@ class NotesCubit extends Cubit<NotesState> {
   ];
 
 
-  getNotes(){
-    emit(GetNotes(notes: notes));
+  getNotes() async{
+    emit(GetNotesLoadingState());
+    await Future.delayed(Duration(seconds: 3));
+    emit(GetNotesState(notes: notes));
   }
 
+  addNote(NoteModel noteModel){
+    notes.add(noteModel);
+    emit(GetNotesState(notes: notes));
+  }
+ deleteNote(NoteModel noteModel){
+    notes.remove(noteModel);
+    emit(GetNotesState(notes: notes));
+  }
 
+// editNote(NoteModel noteModel, String newTitle, String newBody){
+//     int index=notes.indexOf(noteModel);
+//     if(index !=-1){
+//       notes[index]= NoteModel(title: newTitle, body: newBody);
+//       emit(GetNotesState(notes: notes));
+//     }
+//
+// }
+  editNote(NoteModel noteModel, String newTitle, String newBody) {
+    int index = notes.indexOf(noteModel);
+    if (index != -1) {
+      notes[index] = NoteModel(title: newTitle, body: newBody);
+      emit(GetNotesState(notes: List.from(notes))); // Force rebuild by creating a new list
+    }
+  }
 
 
 

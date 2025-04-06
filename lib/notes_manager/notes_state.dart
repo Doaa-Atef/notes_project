@@ -5,12 +5,19 @@ sealed class NotesState {}
 
 final class NotesInitial extends NotesState {}
 
+class GetNotesLoadingState extends NotesState{}
 
-final class GetNotes extends NotesState {
+final class GetNotesState extends NotesState {
+
   final List<NoteModel> notes;
 
-
-  GetNotes ({required this.notes});
+  GetNotesState ({required this.notes});
 }
+
+class AddNote extends NotesState {}
+
+class DeleteNote extends NotesState {}
+
+class EditNote extends NotesState{}
 
 
