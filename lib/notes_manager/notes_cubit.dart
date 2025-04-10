@@ -1,54 +1,79 @@
 
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:notes/database/app_database.dart';
 
 
 import '../models/note_model.dart';
 
 part 'notes_state.dart';
 
+enum UndoActionType {
+  add,
+  delete,
+  update,
+}
 class NotesCubit extends Cubit<NotesState> {
   NotesCubit() : super(NotesInitial());
 
-  List<NoteModel> notes=[
-    NoteModel(title: "Note1", body: "Task1"),
-    NoteModel(title: "Note2", body: "Task2"),
-    NoteModel(title: "Note3", body: "Task3"),
-    NoteModel(title: "Note4", body: "Task4"),
-    NoteModel(title: "Note5", body: "Task5"),
-  ];
+  List<NoteModel> notes=[];
 
+  UndoActionType? lastActionType;
+  NoteModel? lastAffectedNote;
 
-  getNotes() async{
+  getNotes() async {
+    print("get notes");
     emit(GetNotesLoadingState());
-    await Future.delayed(Duration(seconds: 3));
-    emit(GetNotesState(notes: notes));
-  }
 
-  addNote(NoteModel noteModel){
-    notes.add(noteModel);
-    emit(GetNotesState(notes: notes));
-  }
- deleteNote(NoteModel noteModel){
-    notes.remove(noteModel);
-    emit(GetNotesState(notes: notes));
-  }
+    try {
 
-// editNote(NoteModel noteModel, String newTitle, String newBody){
-//     int index=notes.indexOf(noteModel);
-//     if(index !=-1){
-//       notes[index]= NoteModel(title: newTitle, body: newBody);
-//       emit(GetNotesState(notes: notes));
-//     }
-//
-// }
-  editNote(NoteModel noteModel, String newTitle, String newBody) {
-    int index = notes.indexOf(noteModel);
-    if (index != -1) {
-      notes[index] = NoteModel(title: newTitle, body: newBody);
-      emit(GetNotesState(notes: List.from(notes))); // Force rebuild by creating a new list
+      notes = await AppDatabase.getNotes();
+      print("notes loaded from cubit $notes");
+      emit(GetNotesState());
+    } catch (e) {
+      emit(GetNotesErrorState(e.toString()));
+      print("Error fetching notes: $e");
     }
   }
 
 
+  insertNote({required NoteModel noteModel})async{
+    await AppDatabase.insertNote(noteModel: noteModel);
+    lastActionType=UndoActionType.add;
+    lastAffectedNote=noteModel;
+    emit(AddNoteSuccessState());
+    await getNotes();
+
+  }
+
+  Future<void> deleteNote({required int index}) async {
+    emit(DeleteNoteLoadingState());
+    try {
+    lastActionType=UndoActionType.delete;
+    lastAffectedNote=notes[index];
+      await AppDatabase.deleteNote(id: notes[index].id!);
+      notes.removeAt(index);
+      emit(DeleteNoteSuccessState("Note deleted successfully"));
+    } catch (e) {
+      emit(DeleteNoteErrorState(e.toString()));
+    }
+  }
+
+
+
+
+  Future<void> updateNote({required NoteModel noteModel}) async {
+    emit(UpdateNoteLoadingState());
+    try {
+      final oldNote=notes.firstWhere((note)=> note.id==noteModel.id);
+      lastActionType=UndoActionType.update;
+      lastAffectedNote=oldNote;
+      await AppDatabase.updateNote(noteModel: noteModel);
+      getNotes();
+      emit(UpdateNoteSuccessState("Note updated successfully"));
+    } catch (e) {
+      emit(UpdateNoteErrorState(e.toString()));
+      print("e ==> $e");
+    }
+  }
 
 }
